@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Photon — Immersive Digital Experiences</title>
+<style>
+  :root{
+    --bg:#060608;
+    --glass:rgba(6,6,8,0.42);
+    --muted:#bfc7d3;
+    --accent1:#ff7acf;
+    --accent2:#8fbaff;
+  }
+  html,body{
+    height:100%;
+    margin:0;
+    background:var(--bg);
+    overflow:hidden;
+    font-family:'Space Grotesk', sans-serif;
+    color:#fff;
+  }
+ 
+  canvas{
+    position:fixed;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+    display:block;
+  }
+
+ 
+  .overlay {
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background: rgba(0, 0, 0, 0.35);
+    z-index:1; 
+    pointer-events: none;
+  }
+
+  header{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    padding:18px 44px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--glass);
+    backdrop-filter:blur(6px);
+    z-index:3;
+    box-sizing:border-box;
+  }
+  .logo{font-size:18px;font-weight:700;letter-spacing:0.6px}
+  nav{display:flex;gap:28px;align-items:center}
+  nav a{color:var(--muted);text-decoration:none;font-size:14px;white-space:nowrap}
+  nav a:hover{color:#fff}
+
+  .hero{
+    position:relative;
+    z-index:2;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:0 20px;
+    box-sizing:border-box;
+  }
+  .hero h1{
+    font-size:56px;
+    margin:0;
+    max-width:900px;
+    line-height:1.06;
+    background:linear-gradient(90deg,var(--accent1),var(--accent2));
+    -webkit-background-clip:text;
+    color:transparent;
+  }
+  .hero p{
+    margin-top:18px;
+    font-size:18px;
+    color:#cdd6e0;
+    max-width:640px;
+    line-height:1.5;
+  }
+  .cta{margin-top:30px;display:flex;gap:16px}
+  .btn{
+    padding:14px 28px;
+    border-radius:12px;
+    font-size:15px;
+    text-decoration:none;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+  }
+  .primary{background:linear-gradient(135deg,var(--accent1),#b37bff);color:#fff}
+  .ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff}
+
+  footer{
+    position:fixed;
+    bottom:18px;
+    left:20px;
+    color:rgba(255,255,255,0.55);
+    font-size:13px;
+    z-index:3;
+  }
+
+  /* fallback overlay when WebGL fails */
+  #gl-fallback{
+    position:fixed;
+    inset:0;
+    z-index:5;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(180deg,#050508, #0b0b0f);
+    color:#fff;
+  }
+  #gl-fallback .card{
+    padding:24px 30px;
+    border-radius:12px;
+    background:rgba(255,255,255,0.03);
+    backdrop-filter:blur(4px);
+    max-width:680px;
+    text-align:center;
+  }
+  #gl-fallback pre{
+    white-space:pre-wrap;
+    text-align:left;
+    color:#f1c0ff;
+    margin-top:12px;
+    font-size:12px;
+  }
+
+  @media (max-width:720px){
+    .hero h1{font-size:34px}
+    header{padding:12px 16px}
+    nav{gap:14px}
+  }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div class="overlay"></div>
+
+<header>
+  <div class="logo">Photon</div>
+  <nav>
+    <a href="#about">About</a>
+    <a href="#services">Services</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <h1>Bringing Cinematic Spaces to Life</h1>
+  <p>Photon designs and installs high-end cinematic environments, blending precision engineering with immersive visual technology.</p>
+  <div class="cta">
+    <a class="btn primary" href="#start">Get Started</a>
+    <a class="btn ghost" href="#more">Learn More</a>
+  </div>
+</section>
+
+<footer>© <strong>Photon</strong> 2025 • Built for exploration</footer>
+
+<div id="gl-fallback">
+  <div class="card">
+    <h3>Graphics unavailable</h3>
+    <div>We couldn't initialize a GPU-powered background. Your browser might block WebGL or a shader error occurred. The page will continue with a subtle fallback. If you want, open the console for details.</div>
+    <pre id="gl-error"></pre>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('gl');
+  const gl = canvas.getContext('webgl', { antialias: true, preserveDrawingBuffer: false });
+  const fallback = document.getElementById('gl-fallback');
+  const errBox = document.getElementById('gl-error');
+  if(!gl){
+    fallback.style.display='flex';
+    errBox.textContent = 'WebGL not supported';
+    document.body.style.background = 'linear-gradient(180deg,#020204,#0b0b0f)';
+    return;
+  }
+
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(innerWidth * dpr);
+    canvas.height = Math.floor(innerHeight * dpr);
+    canvas.style.width = innerWidth + 'px';
+    canvas.style.height = innerHeight + 'px';
+    gl.viewport(0,0,canvas.width,canvas.height);
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  const vs = `attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+
+  const fs = `precision highp float;uniform vec2 u_resolution;uniform float u_time;float hash(vec2 p){p=fract(p*vec2(123.34,345.45));p+=dot(p,p+34.345);return fract(p.x*p.y);}float noise(vec2 p){vec2 i=floor(p);vec2 f=fract(p);float a=hash(i);float b=hash(i+vec2(1,0));float c=hash(i+vec2(0,1));float d=hash(i+vec2(1,1));vec2 u=f*f*(3.0-2.0*f);return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;}float fbm(vec2 p){float v=0.0;float a=0.5;for(int i=0;i<6;i++){v+=a*noise(p);p*=2.0;a*=0.5;}return v;}vec3 palette(float t){vec3 a=vec3(0.02,0.01,0.06);vec3 b=vec3(0.9,0.5,0.6);vec3 c=vec3(0.2,0.6,1.0);vec3 d=vec3(1.0,0.95,0.7);return mix(mix(a,b,smoothstep(0.0,0.6,t)),mix(c,d,smoothstep(0.6,1.0,t)),t);}void main(){vec2 uv = gl_FragCoord.xy / u_resolution.xy;vec2 p = uv*2.0 - 1.0; p.x *= u_resolution.x/u_resolution.y; float t = u_time * 0.7; float q = fbm(p*1.2 + vec2(0.0, t*0.07)); vec2 r = vec2(fbm(p + q*1.3 + vec2(cos(t*0.2), sin(t*0.15))*0.5)); float f = fbm(p*2.0 + r*2.0 + vec2(0.0, t*0.12)); float rad = length(p); float core = smoothstep(0.0, 0.35, 0.5 - rad + 0.18*fbm(p*6.0 - vec2(0.0,t*0.8))); float halo = exp(-rad*4.0) * (0.8 + 0.6*fbm(p*3.0 + vec2(t*0.2))); float orbs = 0.0; for(int i=1;i<=6;i++){ float id=float(i); float ang = t*0.6*(0.6+id*0.12) + id*1.7; vec2 c = vec2(cos(ang), sin(ang)) * (0.25 + 0.04*id); float d = length(p - c); orbs += smoothstep(0.04, 0.0, d) * (0.65 / id); } float mixv = clamp(f*0.9 + core*1.6 + halo + orbs*0.9, 0.0, 2.2); vec3 col = palette(clamp(mixv*0.5 + q*0.35, 0.0, 1.0)); float glow = exp(-rad*2.6) * 1.6 + pow(core,1.2)*2.2 + orbs*0.5; col += vec3(1.0,0.7,1.0) * glow * 0.28; float seed = hash(gl_FragCoord.xy + vec2(u_time)); float stars = step(0.9975, fract(seed*12345.678)); stars *= pow(noise(gl_FragCoord.xy*0.002 + u_time*0.3), 3.0); col += vec3(1.0) * stars * 1.6; col *= smoothstep(1.6, 0.0, rad*1.2); col = 1.0 - exp(-col); gl_FragColor = vec4(pow(col, vec3(0.95)), 1.0);}`;
+
+  function makeShader(src, type){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    const ok = gl.getShaderParameter(s, gl.COMPILE_STATUS);
+    if(!ok){
+      const log = gl.getShaderInfoLog(s);
+      throw new Error(log);
+    }
+    return s;
+  }
+
+  let prog;
+  try{
+    prog = gl.createProgram();
+    const sv = makeShader(vs, gl.VERTEX_SHADER);
+    const sf = makeShader(fs, gl.FRAGMENT_SHADER);
+    gl.attachShader(prog, sv);
+    gl.attachShader(prog, sf);
+    gl.bindAttribLocation(prog, 0, 'p');
+    gl.linkProgram(prog);
+    if(!gl.getProgramParameter(prog, gl.LINK_STATUS)){
+      throw new Error(gl.getProgramInfoLog(prog));
+    }
+  } catch(e){
+    console.error('Shader init error:', e.message);
+    fallback.style.display='flex';
+    errBox.textContent = e.message;
+    document.body.style.background = 'linear-gradient(180deg,#020204,#0b0b0f)';
+    return;
+  }
+
+  const quad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+
+  const u_resolution = gl.getUniformLocation(prog, 'u_resolution');
+  const u_time = gl.getUniformLocation(prog, 'u_time');
+
+  let start = performance.now();
+
+  function render(){
+    resize();
+    let t = (performance.now() - start) / 1000;
+    gl.useProgram(prog);
+    gl.enableVertexAttribArray(0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform2f(u_resolution, canvas.width, canvas.height);
+    gl.uniform1f(u_time, t);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+})();
+</script>
+</body>
+</html>
